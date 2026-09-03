@@ -13,8 +13,6 @@ override CC without editing the Makefile: `make CC=gcc-14`.
 
 ## Run
 
-## Run
-
 ```bash
 make test     
 make bench    
