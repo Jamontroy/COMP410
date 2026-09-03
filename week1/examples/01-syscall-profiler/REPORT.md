@@ -12,13 +12,14 @@
 		Iterations: 1000000
 		Trials: 7
 		Warm-up: 1 untimed warmup
+
 ##RESULTS
-	iterations per trial : 1000000
-	trials               : 7
-	control (noop)     :     1.13 ns/call   (spread 0.08)
-	syscall (getppid)  :   293.01 ns/call   (spread 2.58)
-	crossing cost      :   291.88 ns   (syscall - control)
-	ratio              :    258.9x a user-mode call
+- iterations per trial : 1000000
+- trials               : 7
+- control (noop)     :     1.13 ns/call   (spread 0.08)
+- syscall (getppid)  :   293.01 ns/call   (spread 2.58)
+- crossing cost      :   291.88 ns   (syscall - control)
+- ratio              :    258.9x a user-mode call
 
 ##PAPER_CONNECTION / CRITIQUE
 
