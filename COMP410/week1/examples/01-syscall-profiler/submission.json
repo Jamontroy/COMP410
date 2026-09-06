@@ -1,7 +1,0 @@
-{
-	"label": "A1",
-	"student": "Montroy",
-	"name": "Joe Montroy",
-	"what_i_built": "Testing the cost to cross the user kernel boundary within my system.",
-	"entrypoint": "make && ./nullcall"
-}
