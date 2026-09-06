@@ -98,6 +98,10 @@ static double time_control_loop(long iters, volatile long *sink)
     return (t1 - t0) / (double) iters;
 }
 
+/*Noop is important because it measures how long it take to perform a function call in isolation
+without needing to cross over the boundary. Thus when we subtract the median getppid time from
+noop time we cross out the overhead of the function call to be left solely with the crossover time. */
+
 static int cmp_double(const void *a, const void *b)
 {
     double x = *(const double *)a, y = *(const double *)b;
