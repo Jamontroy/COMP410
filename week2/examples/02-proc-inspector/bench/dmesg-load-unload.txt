@@ -1,0 +1,2 @@
+[ 2526.139542] comp410: /proc/comp410_procstat created
+[ 2526.216913] comp410: /proc/comp410_procstat removed

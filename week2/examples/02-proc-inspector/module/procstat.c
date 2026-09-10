@@ -90,6 +90,7 @@ static struct proc_dir_entry *entry;
 
 static int __init procstat_init(void)
 {
+
         entry = proc_create(PROCNAME, 0444, NULL, &procstat_ops);
         // TODO 6. proc_create can fail. Check it, log it, and return an error
         // -- a module whose init cannot fail will oops on the first read.

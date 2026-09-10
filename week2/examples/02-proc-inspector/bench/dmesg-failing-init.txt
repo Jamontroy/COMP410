@@ -1,0 +1,1 @@
+[ 2233.067256] comp410: init failed, /proc entry removed
