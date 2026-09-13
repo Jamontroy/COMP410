@@ -1,0 +1,7 @@
+{    
+    "label": "A2",
+    "student": "montroy",
+    "name": "Joe Montroy",
+    "what_i_built": "a /proc module which runs through and checks the state of kernel tasks.",
+    "entrypoint": "make -C module && sudo insmod module/procstat.ko && cat /proc/<yourname>"
+}

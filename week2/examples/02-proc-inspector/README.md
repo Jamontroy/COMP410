@@ -1,15 +1,13 @@
 # COMP 410 — Advanced Operating Systems
-## Week 2 — Starter: `/proc` inspector
-
-The starting point for **A2**. Six TODOs; `make test` goes **5 → 12**.
+## Build
 
 ```bash
 make          # build the two user-space models
-make test     # 5 of 12 pass before you start
-make bench    # see what the models print
+make test     
+make proc-test # validate the live /proc interface in the guest
+make bench    
 ```
-
-**The module is built separately, in the guest:**
+## Run
 
 ```bash
 cd module && make          # needs Linux + kernel headers
@@ -18,47 +16,29 @@ cat /proc/comp410_procstat
 sudo rmmod procstat
 cat /proc/comp410_procstat # should now be "No such file or directory"
 ```
+## File map
 
-> **Work in the QEMU guest, not on your host.** A module bug takes down the
-> kernel it is loaded into. In the guest that is a reboot. See
-> the **Week 1 systems setup guide** on Sakai.
+    module/procstat.c      kernel module: /proc entry, task-state counts, RCU + mutex
+    module/Makefile        kbuild makefile; builds procstat.ko against kernel headers
+    src/copyguard.c        user-space model of the four user-copy boundary rules
+    src/lifecycle.c        user-space model of module load/unload and failing init
+    tests/check.sh         boundary-rule, lifecycle, and module source checks
+    tests/proc-check.sh    user-space format and invariant checks for /proc output
+    tests/results.txt      captured output: 12 of 12 passing
+    bench/proc-read.txt    captured read of /proc/comp410_procstat
+    bench/dmesg-load-unload.txt   kernel log either side of insmod and rmmod
+    bench/dmesg-failing-init.txt  kernel log for the forced init failure
+    Makefile               builds copyguard and lifecycle; make test, make bench
+    README.md              this file
+    REPORT.md              what was built, results, paper connection, citations
+    submission.json        assignment metadata
 
-## The six TODOs
+## Environment
 
-| # | File | What |
-|---|---|---|
-| 1 | `src/copyguard.c` | **Rule 2 — Clamp.** Copy no more than the kernel holds. |
-| 2 | `src/copyguard.c` | **Rule 3 — Bound.** Never write past `kbuf`. |
-| 3 | `src/copyguard.c` | **Rule 4 — Terminate.** User data may arrive with no `NUL`. |
-| 4 | `module/procstat.c` | Take the RCU read lock around the task walk. |
-| 5 | `module/procstat.c` | Guard the read counter with the mutex. |
-| 6 | `module/procstat.c` | Check `proc_create` and let `init` fail properly. |
+    Hypervisor: VirtualBox 7.2.16
+    Bare metal
+    Kernel Version: 6.12.107+deb13-amd64
+    Compiler: gcc 13.3.0
+    Flags: -O2 -Wall -Wextra -std=c11
 
-## What the two models are for
-
-`copyguard` and `lifecycle` are **user-space models**, not the kernel. They
-reproduce the arithmetic of the user-copy boundary and the module lifecycle so
-you can test your understanding on your own machine, with nothing at risk and no
-guest needed.
-
-They cannot model privilege — nothing here can oops a machine. What they model is
-where the bugs actually are: lengths, bounds, and what is left behind.
-
-## Your first run fails, on purpose
-
-`./copyguard` reports three failing rules before you start, including:
-
-```
-[FAIL] Rule 3 Bound: oversized write   offered 256, wrote 256 -- RAN PAST kbuf
-                                       into the guard (in a module this is
-                                       corruption)
-```
-
-That guard region exists so this program can **tell** you it overflowed instead
-of crashing. A real kernel buffer has no guard: the same bug silently corrupts
-whatever came next, which is why rule 3 matters.
-
-## Before you submit
-
-Read section 3 of `handouts/a2-handout.pdf` — *How it is graded* — **before** you
-start rather than after.
+## Notes

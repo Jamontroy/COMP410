@@ -30,7 +30,10 @@ lifecycle: src/lifecycle.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 test: all
-	@./tests/check.sh
+	@sh ./tests/check.sh
+
+proc-test:
+	@sh ./tests/proc-check.sh
 
 bench: all
 	@echo "=== the user-copy boundary ==="
