@@ -1,0 +1,19 @@
+== copyguard: the four boundary rules ==
+  [ok]   Rule 1 -- NULL destination refused
+  [ok]   Rule 2 -- over-long read is clamped
+  [ok]   Rule 3 -- oversized write is bounded
+  [ok]   Rule 4 -- data is terminated
+  [ok]   nothing ran past its buffer
+
+== lifecycle: nothing is left behind ==
+  [ok]   the happy path unloads clean
+  [ok]   every path ends at zero
+  [ok]   no load path leaked
+
+== the module you will build in the guest ==
+  [ok]   task walk takes the RCU lock
+  [ok]   shared counter is locked
+  [ok]   failed init returns an error
+  [ok]   exit removes the /proc entry
+
+12 passed, 0 failed

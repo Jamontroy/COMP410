@@ -1,0 +1,4 @@
+This is the output of make proc-test while the module is loaded.
+
+proc-check: reads incremented 1 -> 2
+proc-check: valid output (189 tasks, read 1)
