@@ -1,0 +1,7 @@
+{
+  "label": "A3",
+  "student": "montroy",
+  "name": "Joe Montroy",
+  "what_i_built": "recreated the lock-free queue from the M&S paper.",
+  "entrypoint": "make"
+}
