@@ -1,0 +1,7 @@
+{
+  "label": "A4",
+  "student": "montroy",
+  "name": "Joe Montroy",
+  "what_i_built": "Implemented an Read-Copy-Update Table.",
+  "entrypoint": "make test"
+}

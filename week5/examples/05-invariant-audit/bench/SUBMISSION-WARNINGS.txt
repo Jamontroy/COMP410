@@ -1,0 +1,9 @@
+Pre-submission warnings, shown when `make test` ran.
+These were displayed before submission and not resolved.
+
+- No audit CSV found at bench/*.csv. Run `make bench` so your results are written to a file - a report without its data cannot be checked.
+- These answers are still blank or hold the placeholder: derived_seed, runs_completed, bug_fraction_median, bug_fraction_spread, max_latency_median_us, shard_ratio_median, identified_pathology, predicted_pathology, prediction_assessment, window_us_median, violation_fraction_median, violation_fraction_spread, episodes_median, invariant_violated.
+- README.md still has template prompt line(s) at line 8, 12, 16, 20, 24 - replace each with your own words.
+- REPORT.md still has template prompt line(s) at line 8, 12, 31, 39, 43 - replace each with your own words.
+- submission.json: `what_i_built` still holds the example value 'one sentence, in your own words'.
+- submission.json: `entrypoint` still holds the example value 'the exact command that runs your work'.
