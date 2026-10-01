@@ -6,7 +6,6 @@
 ## Prediction
 
 2.3 Pathology is predicted using the seed % 3 to give a 0,1,2 in workload.c. I don't you literally meant predict it but with my seed % 3 the output is 0 meaning it will run through the blocked holder pathology. In the data I expect to see a lot of processes going through quickly with the occasional long wait time. This will probably be exposed through a low average time for a worker but a high max time for a worker.
-*Your prediction, before you have measured anything: which of the three pathologies you expect, why, and what you expect `make analyze` to show for it. Write this BEFORE your first `make bench`, and do not edit it afterward (handout 2.3).*
 
 ## Answers
 
@@ -42,6 +41,32 @@ For section 2.2:
 ## Results
 
 *Your median hand-off latency, the threshold it gives, and which tasks are bug-length (handout 2.5). Then which pathology you have, and the figures, as medians with spreads, that rule out each of the other two. Compare with your Prediction, honestly. For 3.0: your `make windows` output, the window you chose and why, whether your pool violates the invariant or only queues, and where the latency rule and the invariant disagree (handout 3.2 and 3.4).*
+make bench
+```bash
+seed 250717358276124  workers 4 (the pool runs 4 here)  sizes 1000,2000,20000,100000  warmup 3  runs 25  (about a second per run)
+```
+
+make analyze
+```bash
+A5 audit: 25 run(s) from bench/audit.csv, seed 250717358276124, pool of 4 workers
+
+                                 MEDIAN          min          max       SPREAD
+median_latency_us               140.991      131.992      149.991       17.999
+max_latency_us                31379.098    30076.152    32971.023     2894.871
+bug_fraction                   0.173500     0.168000     0.200250     0.032250
+shard0_median_latency_us        328.480      299.982      332.979       32.997
+shard1_median_latency_us        111.001      109.994      117.993        7.999
+shard_ratio (s0 / s1)             2.879        2.695        3.018        0.323
+
+The invariant (handout section 3): not attempted yet -- invariant_scan is still the stub.
+
+Dispatcher lateness: median 112 us behind its schedule (the load asked for is the load delivered).
+
+Every figure above is a median across runs, with its spread. No verdict:
+which pathology this shape matches, and why, is your REPORT.
+```
+
+Taking a look at the output from make analyze we can see that the median hand-off latency was 140.991 µs with a spread of 17.999 µs. The bug-length threshold is strictly more than 10 times each run’s median, or about 1,409.91 µs at the median; 17.35% of tasks were bug-length (spread 3.225 percentage points). The large maximum latency, 31,379.098 µs (spread 2,894.871 µs), is consistent with blocked-holder waits and is less consistent with brief burst queueing. This is consistent with what I made in the prediction as I knew that since my seed would lead to a blocked-holder, it would shoot bursts through the queue with a long max wait time.
 
 ## Paper connection
 

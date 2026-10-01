@@ -55,7 +55,19 @@ static int mine_base_case(void) {
  * and a correct one disagree. Return -1 until you write it.
  */
 static int mine_invariant_case(void) {
-    return -1;  /* not written yet: skipped */
+        const uint64_t base_ns = 1000000000ull; // initialize base_ns to 1 second in nanoseconds
+        wl_record records[] = { // initialize an array of wl_record structs to represent the tasks in the run
+                { .task_id = 0, .ready_ns = base_ns, .start_ns = base_ns,
+                    .end_ns = base_ns + 100000 }, // task 0 is ready at base_ns, starts at base_ns, and ends at base_ns + 100000
+                { .task_id = 1, .ready_ns = base_ns, .start_ns = base_ns,
+                    .end_ns = base_ns + 100000 }, // task 1 is ready at base_ns, starts at base_ns, and ends at base_ns + 100000
+                { .task_id = 2, .ready_ns = base_ns + 10000, // this is the kicker and will cause the invariant to be violated in the broken version of invariant_scan, since it will see that there is a waiting task while all workers are busy
+                    .start_ns = base_ns + 100000, .end_ns = base_ns + 110000 } // its ready at base_ns + 10000, starts at base_ns + 100000, and ends at base_ns + 110000
+        };
+        wl_result run = { .queued = 3, .workers = 2, .records = records }; // initialize a wl_result struct to represent the run, with 3 queued tasks, 2 workers, and the records array
+        wl_invariant inv; // initialize a wl_invariant struct to hold the results of the invariant_scan
+        invariant_scan(&run, 2, 0.0, &inv); // call invariant_scan with the run, 2 workers, a minimum episode length of 0.0, and the inv struct to hold the results
+        return inv.episodes == 0 && close_enough(inv.violation_us, 0.0); // return 1 if the invariant_scan reports 0 episodes and 0.0 violation time, otherwise return 0
 }
 
 int main(void) {

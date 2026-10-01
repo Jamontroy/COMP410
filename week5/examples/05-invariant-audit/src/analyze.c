@@ -82,22 +82,95 @@ int classify_latency(double latency_us, double baseline_median_us) {
 
 /* ---- (handout section 3) --------------------------------- */
 
+typedef struct {uint64_t time_ns; int waiting_delta; int busy_delta;} invariant_event; // Create a new struct to hold the time_ns, waiting_delta, and busy_delta values for each event. This will be used to sort the events in order of time_ns and then process them to determine if the invariant is violated.
+
+static int compare_event_time(const void *left, const void *right) { // This function is nearly identical to the one I used in compare_double, but this time it is comparing invariant_event structs and the time_ns values for qsort.
+    const invariant_event *left_event = left;
+    const invariant_event *right_event = right;
+    if (left_event->time_ns < right_event->time_ns) {
+        return -1;
+    }
+    if (left_event->time_ns > right_event->time_ns) {
+        return 1;
+    }
+    return 0;
+}
+
 void invariant_scan(const wl_result *run, unsigned workers, double min_episode_us,
                     wl_invariant *out) {
-    /* YOUR JOB (handout 3.1), for 3.0. Contract: analyze.h. Until you write
-     * it, violation_us = -1 tells the tests and `make analyze` that section 3
-     * has not been attempted. */
-    (void)run;
-    (void)workers;
-    (void)min_episode_us;
-    *out = (wl_invariant){ .violation_us = -1.0 };
+    *out = (wl_invariant){0};
+
+    size_t started = 0; // Count the number of started records in run->records
+    uint64_t earliest_ready = 0, latest_end = 0;
+    for (unsigned i = 0; i < run->queued; i++) { // for every record in run->records
+        const wl_record *record = &run->records[i];  // set record to the current record[i] in run->records
+        if (record->start_ns == 0) { // if the record has not started, skip it
+            continue;
+        }
+        if (started == 0 || record->ready_ns < earliest_ready) { // if this is the first started record or its ready_ns is lower than the earliest_ready set it to earliest ready
+            earliest_ready = record->ready_ns;
+        }
+        if (started == 0 || record->end_ns > latest_end) { // the same thing but with latest_end, if it has the longest end_ns set it to latest_end
+            latest_end = record->end_ns;
+        }
+        started++; // increment the number of started records
+    }
+    if (started == 0) { // checks if there are any started records after the for loop, if not it returns out of the function with all values in out set to 0, as per the contract.
+        return;
+    }
+
+    invariant_event *events = malloc(started * 3 * sizeof *events); // allocate memory for the new events array, which will hold all of the events for each started record. Each record has 3 events: ready, start, and end.
+    if (events == NULL) { // check to make sure the memory was actually allocated
+        fprintf(stderr, "invariant_scan: out of memory (started=%zu)\n", started);
+        exit(1);
+    }
+
+    size_t event_count = 0; // initialize the event_count to 0, this will be used to keep track of how many events have been added to the events array
+    for (unsigned i = 0; i < run->queued; i++) { // same as above for every record in run->records
+        const wl_record *record = &run->records[i]; // same as above, set record to the current record[i] in run->records
+        if (record->start_ns == 0) { // if the record has not started, skip it
+            continue;
+        }
+        events[event_count++] = (invariant_event){ record->ready_ns, 1, 0 }; // add the ready event to the events array, with a waiting_delta of 1 and a busy_delta of 0
+        events[event_count++] = (invariant_event){ record->start_ns, -1, 1 }; // add the start event to the events array, with a waiting_delta of -1 and a busy_delta of 1
+        events[event_count++] = (invariant_event){ record->end_ns, 0, -1 }; // add the end event to the events array, with a waiting_delta of 0 and a busy_delta of -1
+    }
+    qsort(events, event_count, sizeof *events, compare_event_time); // use qsort to sort the events by time_ns, this will be used so we can process the events in order and determine if the invariant is violated at any point in time. Also uses the compare_event_time function I made earlier.
+
+    int64_t waiting = 0, busy = 0; // these will be used to track the number of waiting and busy workers
+    int in_episode = 0; // this will be used to track if we are currently in an episode of invariant violation
+    uint64_t episode_start = 0; // this will be used to track the start time of an episode
+    size_t i = 0; // this will be used to iterate through the events array
+    while (i < event_count) { // while there are still events to process
+        uint64_t time_ns = events[i].time_ns; // set time_ns to the current event's time_ns
+        int64_t waiting_delta = 0, busy_delta = 0; // these will be used to track the changes in waiting and busy workers at this time_ns
+        do { // processes all events with the same time_ns, adding their waiting_delta and busy_delta to the totals
+            waiting_delta += events[i].waiting_delta;
+            busy_delta += events[i].busy_delta;
+            i++;
+        } while (i < event_count && events[i].time_ns == time_ns); // while there are still events to process and the next event has the same time_ns, keep processing
+
+        waiting += waiting_delta; // update number of waiting and busy workers
+        busy += busy_delta; // update number of waiting and busy workers
+        int now_violated = waiting > 0 && busy < (int64_t)workers; // check if the invariant is violated at this time_ns
+        if (in_episode && !now_violated) { // if we are in a episode and the invariant is no longer violated, we need to end the episode and record its length
+            double duration_us = (double)(time_ns - episode_start) / 1000.0;
+            if (duration_us > min_episode_us) {
+                out->episodes++;
+                out->violation_us += duration_us;
+            }
+        } else if (!in_episode && now_violated) { // if we are not in an episode and the invariant is now violated, we need to start a new episode
+            episode_start = time_ns;
+        }
+        in_episode = now_violated; // update the in_episode flag to reflect the current state of the invariant
+    }
+
+    out->span_us = (double)(latest_end - earliest_ready) / 1000.0; // set the span_us to the total time from the earliest ready_ns to the latest end_ns
+    free(events); // free the memory allocated for the events array
 }
 
 double episode_window_us(double median_latency_us) {
-    /* YOUR DECISION (handout 3.2), for 3.0: the persistence window, from
-     * `make windows` on your own workload. -1 means "not chosen yet". */
-    (void)median_latency_us;
-    return -1.0;
+    return median_latency_us > 0.0 ? 100.0 * median_latency_us : 1.0; // if the median latency is greater than 0, return 100 times the median latency, otherwise return 1.0
 }
 
 /* ---- the summary (provided) ------------------------------------------- */

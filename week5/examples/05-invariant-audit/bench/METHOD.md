@@ -14,7 +14,14 @@
 
 ## Machine
 
-*CPU, OS, compiler, and whether you ran on the host or the course guest.*
+| Component | Info |
+|--|--|
+| CPU | ARM11 32-bit CPU |
+| Architecture | ARM |
+| Interface | Bare Metal |
+| OS | Raspbian GNU/Linux 13.6 (trixie)|
+| Compiler | gcc 14.2.0 |
+| Flags | std=c11 -Wall -Wextra -O2 -pthread -Isrc |
 
 ## What these numbers do NOT establish
 
